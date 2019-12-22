@@ -16,8 +16,9 @@ import socketserver
 DEBUG = int(os.environ.get('DEBUG', '0'))
 
 class JenkinsMetrics(object):
-    def __init__(self, target, user, password, insecure):
+    def __init__(self, target, host, user, password, insecure):
         self._target = target.rstrip("/")
+        self._host = host
         self._user = user
         self._password = password
         self._insecure = insecure
@@ -27,9 +28,9 @@ class JenkinsMetrics(object):
         url = '{0}/prometheus/'.format(self._target)
 
         if self._user and self._password:
-            response = requests.get(url, auth=(self._user, self._password), verify=(not self._insecure))
+            response = requests.get(url, auth=(self._user, self._password), headers={'host': self._host}, verify=(not self._insecure))
         else:
-            response = requests.get(url, verify=(not self._insecure))
+            response = requests.get(url, headers={'host': self._host}, verify=(not self._insecure))
 
         if DEBUG:
             print(response.text)
@@ -50,6 +51,13 @@ def parse_args():
         required=False,
         help='server url from the jenkins api',
         default=os.environ.get('JENKINS_SERVER', 'http://jenkins:8080')
+    )
+    parser.add_argument(
+        '--host',
+        metavar='host',
+        required=True,
+        help='server host header',
+        default='None'
     )
     parser.add_argument(
         '--user',
@@ -87,7 +95,7 @@ def parse_args():
 def main():
     class MetricRequestHandler(http.server.SimpleHTTPRequestHandler):
         def do_GET(self):
-            jenkinsMetrics = JenkinsMetrics(args.jenkins, args.user, args.password, args.insecure)
+            jenkinsMetrics = JenkinsMetrics(args.jenkins, args.host, args.user, args.password, args.insecure)
 
             self.send_response(200)
             self.end_headers()

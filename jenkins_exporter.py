@@ -83,9 +83,9 @@ def parse_args():
     )
     parser.add_argument(
         '-k', '--insecure',
-        dest='insecure',
+        metavar='insecure',
         required=False,
-        action='store_true',
+        type=lambda x: (str(x).lower() == 'true'),
         help='Allow connection to insecure Jenkins API',
         default=False
     )
